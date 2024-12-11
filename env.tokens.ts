@@ -4,4 +4,9 @@ const TOKENS = {
     AUTH_SECRET: process.env.AUTH_SECRET,
 };
 
-export { TOKENS };
+const HOST = {
+    BACKEND_URL: process.env.BACKEND_URL,
+    HOST_URL: process.env.HOST_URL,
+};
+
+export { TOKENS, HOST };
