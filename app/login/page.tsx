@@ -14,6 +14,13 @@ import { LoaderCircle } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AuthError } from "next-auth";
+import { resolveSoa } from "dns";
+
+const errorMessages = {
+    CredentialsSignin: "Invalid email or password",
+    default: "An unknown error occurred. Please try again.",
+};
 
 function LoginPage() {
     const [apiError, setApiError] = useState<string | null>(null);
@@ -28,15 +35,21 @@ function LoginPage() {
         console.log("done");
         const { email, password } = data;
 
-        console.log(data);
-
-        await signIn("credentials", {
+        const res = await signIn("credentials", {
             email,
             password,
             redirect: false,
         });
 
-        // router.push("/");
+        if (res?.error) {
+            console.log("error occured", res);
+            if (res.error === "CredentialsSignin") {
+                setApiError("Invalid Password");
+                return;
+            }
+
+            setApiError(errorMessages.default);
+        }
     };
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -75,11 +88,16 @@ function LoginPage() {
                         </div>
                     </div>
                     <div>
-                        {errors && (
+                        {!apiError && errors && (
                             <div className="text-red-500 dark:text-red-400 h-10">
                                 {(errors.email && errors.email.message) ||
                                     (errors.password &&
                                         errors.password.message)}
+                            </div>
+                        )}
+                        {apiError && (
+                            <div className="text-red-500 dark:text-red-400 h-10">
+                                {apiError}
                             </div>
                         )}
                     </div>
@@ -122,5 +140,3 @@ function LoginPage() {
 }
 
 export default LoginPage;
-
-//

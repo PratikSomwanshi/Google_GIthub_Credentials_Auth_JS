@@ -26,7 +26,7 @@ function GoogleLoginButton() {
                         });
 
                         if (res?.error) {
-                            console.log("error occured");
+                            console.log("error occured ");
                             return;
                         }
                     } catch (error) {

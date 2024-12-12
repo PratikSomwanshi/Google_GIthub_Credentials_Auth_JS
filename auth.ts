@@ -1,4 +1,4 @@
-import NextAuth, { AuthError } from "next-auth";
+import NextAuth, { AuthError, CredentialsSignin } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
@@ -41,32 +41,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
+                const { email, password } = credentials;
+
                 try {
-                    const { email, password } = credentials;
+                    const res = await fetch(`${HOST.BACKEND_URL}/login`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ email, password }),
+                    });
 
-                    // if (!email || !password) {
-                    //     throw new Error(
-                    //         "Please provide valid email and password"
-                    //     );
-                    // }
+                    const data = (await res.json()).data[0];
 
-                    // Simulate an API call to authenticate the user
+                    console.log("data ", data);
+                    if (!res.ok) {
+                        throw new CredentialsSignin("Invalid credentials");
+                    }
+
                     const user = {
-                        username: "jetha",
-                        email: "user@example.com",
-                        token: "fake-jwt-token",
+                        username: data.username,
+                        email: data.email,
+                        token: data.token,
                         isLoggedIn: true,
                     };
 
-                    // You can replace this with actual authentication logic
-                    if (!user) {
-                        throw new Error("Invalid credentials");
+                    return user;
+                } catch (error) {
+                    if (error instanceof CredentialsSignin) {
+                        throw error;
                     }
-
-                    return user; // Successfully authenticated
-                } catch (error: any) {
-                    // console.error('Authentication error:', error.message);
-                    throw new AuthError(error.messages);
+                    throw new AuthError("An error occurred");
                 }
             },
         }),
@@ -95,8 +100,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
                     const data = (await res.json()).data[0];
 
-                    console.log("data ", data);
-
                     user.username = data.username;
                     user.email = data.email;
                     user.token = data.token;
@@ -105,7 +108,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 }
 
                 if (account?.provider === "credentials") {
-                    console.log("signin called in credentials", user);
+                    return true;
                 }
 
                 return "/error?error=OAuthCallback";
